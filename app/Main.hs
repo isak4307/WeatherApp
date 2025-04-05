@@ -8,11 +8,17 @@ import Parser
 import Types
 
 main :: IO ()
-main = do
-  putStrLn "> Starting up the application, type !help for the list of available commands"
-  loop
+main = 
+  -- Uncomment discord and comment out terminal if you want to run it through the discord bot
+  -- discord 
+  terminal
 
 -- FOR TERMINAL USAGE
+terminal :: IO()
+terminal = do
+  putStrLn "> Starting up the application, type !help for the list of available commands"
+  loop 
+-- | Ensure that the program doesn't stop after one interaction
 loop :: IO ()
 loop = do
   putStr ">"
