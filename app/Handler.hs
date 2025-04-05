@@ -4,7 +4,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Handler where
-
 import API
 import Control.Lens ((^.))
 import Control.Monad.IO.Class (liftIO)
@@ -66,49 +65,51 @@ handleMinMax wData d weather = do
   return (T.pack $ minTempRes <> maxTempRes)
 
 -- | Handler for all the commandtypes
-handleCommand :: Cmd -> IO ()
+handleCommand :: Cmd -> ExceptT ErrorTypes IO Text
 
 -- | Handle Location conversion to Lat Lon
 handleCommand (LocationCmd args) = do
-  result <- runExceptT $ handleGeoLocation args
+  result <- liftIO $ runExceptT $ handleGeoLocation args
   case result of
-    Left err -> print err
-    Right (x : _) -> putStrLn $ "Fetched location:\n " <> show x -- Get only the first  location (not sure if that is a good idea)
-    Right [] -> print $ MissingVal "There are no values with the given input"
+    Left err -> throwError err
+    Right (x : _) -> 
+      -- Get only the first  location (not sure if that is a good idea)
+      let output = T.pack $ "Fetched location:\n " <> show x <> "Data provided by Nominatim/OpenStreetMap (https://nominatim.org/)" 
+      in return output  
+    Right [] ->  return $ T.pack $ show $ MissingVal "There are no values with the given input"
 
 -- \| Handle Getting weather data given time
 handleCommand (WeatherCmd args) = do
-  result <- runExceptT $ handleWeather args
+  result <- liftIO $ runExceptT $ handleWeather args
   case result of
-    Left err -> print err
-    Right (wData, weather) -> do
-      putStrLn $ T.unpack (display wData weather)
+    Left err -> throwError err
+    Right (wData, weather) -> return $ display wData weather
 
 -- \| Handle Getting the current weather data
 handleCommand (CurrentWeatherCmd args) = do
-  result <- runExceptT $ handleCurrentWeather args
+  result <- liftIO $ runExceptT $ handleCurrentWeather args
   case result of
-    Left err -> print err
+    Left err -> throwError err
     Right (wData, weather) -> do
       time' <- liftIO $ maybe currentTime return (date weather)
-      putStrLn $ T.unpack (display wData weather {date = Just time'})
+      return $ display wData weather {date = Just time'}
 
 -- \| Handle Getting the highest and lowest temperature for the given day
 handleCommand (MinMaxWeatherCmd args) = do
-  result <- runExceptT $ handleWeather args
+  result <- liftIO $ runExceptT $ handleWeather args
   case result of
-    Left err -> print err
+    Left err -> throwError err
     Right (wData, weather) ->
       case date weather of
         Just d -> do
-          res <- runExceptT $ handleMinMax wData d weather
+          res <- liftIO $ runExceptT $ handleMinMax wData d weather
           case res of
-            Left e -> print e
-            Right minMax -> putStrLn $ T.unpack minMax
-        Nothing -> print $ MissingVal "Unable to fetch the appropriate date"
+            Left e -> throwError e
+            Right minMax -> return minMax
+        Nothing -> return $ T.pack $ show $ MissingVal "Unable to fetch the appropriate date"
 
 -- \| Handle mistyped/non-existing commands
-handleCommand _ = print $ UnknownCommand "Something went wrong with the given command"
+handleCommand _ = return $ T.pack $ show $ UnknownCommand "Something went wrong with the given command"
 
 -- | Check if the timeseries is older than the given time
 checkValidTime :: TimeSeries -> UTCTime -> Bool
@@ -237,7 +238,12 @@ displayWeather weatherData targetTime =
                   sumDetail <- timeData' ^. next1Hour
                   summ <- sumDetail ^. summary
                   summ ^. symbolCode
-             in T.pack "- WeatherCondition: " <> T.pack (show weather) <> T.pack "\n" <> T.pack (show details')
+             in T.pack $ "- WeatherCondition: " <> 
+                show weather <> 
+                "\n" <> 
+                show details' <>
+                "\n Weather data provided by MET Norway" <>
+                       "and Nominatim/OpenStreetMap (Latitude and Longitude)\n"
 
 -- | Display the help menu
 displayCommands :: Text
