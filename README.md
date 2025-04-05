@@ -38,7 +38,7 @@ The date format needs to be in ISO8601 => YYYY-MM-DDTHH:mm:ssZ
 - minMax: Get the highest and lowest temperature given city,country and date
 The date format needs to be in ISO8601 => YYYY-MM-DDTHH:mm:ssZ  
 **!minMax City,Country,date**
-- quit: Exit the application
+- quit: Exit the application (currently doesn't work in discord bot)
 **!quit**
 - help: Display all available commands
 **!help**
