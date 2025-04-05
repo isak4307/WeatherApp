@@ -65,6 +65,7 @@ executable WeatherApp
                    Types
                    Parser
                    Handler
+                   Discord
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
@@ -100,7 +101,7 @@ executable WeatherApp
                     , QuickCheck  
                     , quickcheck-instances
     
-    
+    ghc-options: -fplugin=Polysemy.Plugin
     -- Directories containing source files.
     hs-source-dirs:   app
 

@@ -71,12 +71,11 @@ fetchWeather weather = do
 
 -- | Creates the appropriate link for the get request adding the queryparams and the user-agent values
 requestGeoConstructor :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Text -> ClientM [NominatimResponse]
-requestGeoConstructor = client (Proxy ::Proxy GeoAPI)
+requestGeoConstructor = client (Proxy :: Proxy GeoAPI)
 
 -- | The base url for the weather api
 baseGeoURL :: BaseUrl
 baseGeoURL = BaseUrl {baseUrlScheme = Https, baseUrlHost = "nominatim.openstreetmap.org", baseUrlPort = 443, baseUrlPath = ""}
-
 
 -- | Fetches the GeoLocation value given a Location name
 fetchGeoLocation :: Location -> ExceptT ErrorTypes IO [GeoLocation]

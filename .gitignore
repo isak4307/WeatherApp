@@ -1,0 +1,4 @@
+# Ignore the discord bot token
+token.txt
+# Ignore todo.md file which has todo comments
+todo.md

@@ -1,9 +1,7 @@
-{-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 
 module Handler where
+
 import API
 import Control.Lens ((^.))
 import Control.Monad.IO.Class (liftIO)
@@ -72,11 +70,11 @@ handleCommand (LocationCmd args) = do
   result <- liftIO $ runExceptT $ handleGeoLocation args
   case result of
     Left err -> throwError err
-    Right (x : _) -> 
+    Right (x : _) ->
       -- Get only the first  location (not sure if that is a good idea)
-      let output = T.pack $ "Fetched location:\n " <> show x <> "Data provided by Nominatim/OpenStreetMap (https://nominatim.org/)" 
-      in return output  
-    Right [] ->  return $ T.pack $ show $ MissingVal "There are no values with the given input"
+      let output = T.pack $ "Fetched location:\n " <> show x <> "Data provided by Nominatim/OpenStreetMap (https://nominatim.org/)"
+       in return output
+    Right [] -> return $ T.pack $ show $ MissingVal "There are no values with the given input"
 
 -- \| Handle Getting weather data given time
 handleCommand (WeatherCmd args) = do
@@ -121,6 +119,7 @@ checkValidTime ts inpDate =
        in inpTime' <= time'
     Nothing -> False
 
+-- | Get the highest temperature given the date (won't be date that are older than the input)
 getMax :: [TimeSeries] -> UTCTime -> Maybe (TimeSeries, Double)
 getMax tsList inpDate =
   let entries =
@@ -145,6 +144,7 @@ getMax tsList inpDate =
         Nothing
         entries
 
+-- | Get the lowest temperature given the date (won't be date that are older than the input)
 getMin :: [TimeSeries] -> UTCTime -> Maybe (TimeSeries, Double)
 getMin tsList inpDate =
   let entries =
@@ -177,7 +177,6 @@ filterWeatherByDate weatherData targetDate = do
   filter (\ts -> utctDay (fromJust (ts ^. time)) == targetDate) tsList
 
 -- | Filter the weatherdata to get only the timeseries data
--- TODO extend this to maybe have more complex data?
 getSpecificTimeSeries :: WeatherData -> UTCTime -> Maybe TimeSeriesData
 getSpecificTimeSeries w targetTime = do
   props <- w ^. properties
@@ -211,7 +210,6 @@ roundToNearestHour t =
       roundedHoursInSec = fromIntegral $ roundedHours * 3600
    in UTCTime day roundedHoursInSec
 
-
 ------------ DISPLAY
 
 -- | Display the weather in the output
@@ -223,7 +221,6 @@ display weatherData w =
     <> displayWeather weatherData (fromJust (date w))
     <> "\n"
 
--- TODO Use Errors instead of text? Maybe Either IO Text ErrorTypes OPTIMIZE THIS
 displayWeather :: WeatherData -> UTCTime -> Text
 displayWeather weatherData targetTime =
   case getSpecificTimeSeries weatherData targetTime of
@@ -238,24 +235,27 @@ displayWeather weatherData targetTime =
                   sumDetail <- timeData' ^. next1Hour
                   summ <- sumDetail ^. summary
                   summ ^. symbolCode
-             in T.pack $ "- WeatherCondition: " <> 
-                show weather <> 
-                "\n" <> 
-                show details' <>
-                "\n Weather data provided by MET Norway" <>
-                       "and Nominatim/OpenStreetMap (Latitude and Longitude)\n"
+             in T.pack $
+                  "- WeatherCondition: "
+                    <> show weather
+                    <> "\n"
+                    <> show details'
+                    <> "\n Weather data provided by MET Norway"
+                    <> " and Nominatim/OpenStreetMap (Latitude and Longitude)"
 
 -- | Display the help menu
 displayCommands :: Text
 displayCommands =
   "Here are the available commands:\n\n"
-    <> " !current: Display the current weather given a city.\n"
-    <> " By default it is set to Norway, but can also give country and date to get more accurate weatherdata.\n"
-    <> " The date needs to have the ISO-8601 format => YYYY-MM-DDTHH:mm:ssZ \n"
-    <> " !current City ?,Country\n\n"
-    <> " !weather: Display the weather given a city, country and date.\n"
+    <> " current: Display the current weather given a city.\n"
+    <> " !current City,?Country\n\n"
+    <> " weather: Display the weather given a city, country and date.\n"
     <> " The date format needs to be in ISO8601 => YYYY-MM-DDTHH:mm:ssZ \n"
     <> " !weather City, Country, Date\n\n"
-    <> " !location: location City ?,Country\n\n"
+    <> " location: Display the latitude and longitude values given a city (and optionally a country) rounded to 4 decimals.\n"
+    <> " !location City,?Country\n\n"
+    <> " minMax: Get the highest and lowest temperature given city,country and date\n"
+    <> " The date format needs to be in ISO8601 => YYYY-MM-DDTHH:mm:ssZ \n"
+    <> " !minMax City,Country,date\n\n"
     <> " !quit: Exit the application\n\n"
     <> " !help: Display all available commands"

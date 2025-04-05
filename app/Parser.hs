@@ -1,17 +1,13 @@
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 
 module Parser where
 
-import Data.Char (isPrint)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Time
 import Text.Megaparsec
   ( anySingle,
     eof,
-    noneOf,
     optional,
     satisfy,
     some,
@@ -29,19 +25,19 @@ parseCommand inp = do
   case cmd of
     "!quit" -> Right Quit
     "!help" -> Right Help
-    "!current" -> 
+    "!current" ->
       case args of
         "" -> Left $ ArgumentError "No arguments provided, need at least city"
         _  -> Right $ CurrentWeatherCmd args
-    "!weather" -> 
+    "!weather" ->
       case args of
         "" -> Left $ ArgumentError "No arguments provided, need at least city and date"
         _  -> Right $ WeatherCmd args
-    "!location" -> 
+    "!location" ->
       case args of
         "" -> Left $ ArgumentError "No arguments provided, need at least city"
         _  -> Right $ LocationCmd args
-    "!minMax" -> 
+    "!minMax" ->
       case args of
         "" -> Left $ ArgumentError "No arguments provided, need at least city and date"
         _  -> Right $ MinMaxWeatherCmd args
@@ -50,7 +46,7 @@ parseCommand inp = do
 -- | Parse the argument to create a Location datatype
 parseGeoLocation :: Parser Location
 parseGeoLocation =
-  (Location . T.pack <$> some (satisfy isValidChar))
+  (Location . T.pack <$> some (satisfy (/= ',')))
     <*> optional
       ( char ','
           *> optional (char ' ')
@@ -59,22 +55,22 @@ parseGeoLocation =
 
 parseCurrentWeather :: Parser Weather
 parseCurrentWeather =
-  (Weather . T.pack <$> some (satisfy isValidChar)) -- Parse city
+  (Weather . T.pack <$> some (satisfy (/= ','))) -- Parse city
     <*> optional
       ( char ','
           *> optional (char ' ')
-          *> (T.pack <$> some (satisfy isValidChar))
+          *> (T.pack <$> some (satisfy (/= ',')))
       ) -- Parse country
     <*> pure Nothing
 
--- TODO parse weather doesn't work for city,date but maybe that should be seperated?
+
 parseWeather :: Parser Weather
 parseWeather =
-  (Weather . T.pack <$> some (satisfy isValidChar)) -- Parse city
+  (Weather . T.pack <$> some (satisfy (/= ','))) -- Parse city
     <*> optional
       ( char ','
           *> optional (char ' ')
-          *> (T.pack <$> some (satisfy isValidChar))
+          *> (T.pack <$> some (satisfy (/= ',')))
       ) -- Parse country
     <*> ( do
             _ <- char ','
@@ -86,8 +82,3 @@ parseWeather =
 -- | Convert the input text to the appropriate UTCTime value
 parseDate :: Text -> Parser UTCTime
 parseDate dateT = parseTimeM True defaultTimeLocale "%FT%T%QZ" (T.unpack dateT)
-
--- | Don't allow escaped characters and ',' ( since ',' is used as the seperator for splitting parameter ) 
--- TODO get rid of escaped char since that should maybe be allowed
-isValidChar :: Char -> Bool
-isValidChar c = c /= ','
