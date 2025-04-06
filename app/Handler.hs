@@ -72,18 +72,18 @@ handleCommand (LocationCmd args) = do
     Left err -> throwError err
     Right (x : _) ->
       -- Get only the first  location (not sure if that is a good idea)
-      let output = T.pack $ "Fetched location:\n " <> show x <> "Data provided by Nominatim/OpenStreetMap (https://nominatim.org/)"
+      let output = T.pack $ "Fetched location:\n " <> show x <> "\n Data provided by Nominatim/OpenStreetMap (https://nominatim.org/)"
        in return output
     Right [] -> return $ T.pack $ show $ MissingVal "There are no values with the given input"
 
--- \| Handle Getting weather data given time
+-- | Handle Getting weather data given time
 handleCommand (WeatherCmd args) = do
   result <- liftIO $ runExceptT $ handleWeather args
   case result of
     Left err -> throwError err
     Right (wData, weather) -> return $ display wData weather
 
--- \| Handle Getting the current weather data
+-- | Handle Getting the current weather data
 handleCommand (CurrentWeatherCmd args) = do
   result <- liftIO $ runExceptT $ handleCurrentWeather args
   case result of
@@ -92,7 +92,7 @@ handleCommand (CurrentWeatherCmd args) = do
       time' <- liftIO $ maybe currentTime return (date weather)
       return $ display wData weather {date = Just time'}
 
--- \| Handle Getting the highest and lowest temperature for the given day
+-- | Handle Getting the highest and lowest temperature for the given day
 handleCommand (MinMaxWeatherCmd args) = do
   result <- liftIO $ runExceptT $ handleWeather args
   case result of
@@ -106,7 +106,7 @@ handleCommand (MinMaxWeatherCmd args) = do
             Right minMax -> return minMax
         Nothing -> return $ T.pack $ show $ MissingVal "Unable to fetch the appropriate date"
 
--- \| Handle mistyped/non-existing commands
+-- | Handle mistyped/non-existing commands
 handleCommand _ = return $ T.pack $ show $ UnknownCommand "Something went wrong with the given command"
 
 -- | Check if the timeseries is older than the given time
@@ -251,7 +251,7 @@ displayCommands =
     <> " !current City,?Country\n\n"
     <> " weather: Display the weather given a city, country and date.\n"
     <> " The date format needs to be in ISO8601 => YYYY-MM-DDTHH:mm:ssZ \n"
-    <> " !weather City, Country, Date\n\n"
+    <> " !weather City,?Country, Date\n\n"
     <> " location: Display the latitude and longitude values given a city (and optionally a country) rounded to 4 decimals.\n"
     <> " !location City,?Country\n\n"
     <> " minMax: Get the highest and lowest temperature given city,country and date\n"

@@ -30,9 +30,9 @@ The default is that it runs through the terminal, thus all you need to do is bui
 Here are the available commands:
 - current: Display the current weather given a city.  
   **!current City,?Country**
-- weather: Display the weather given a city, country and date.
+- weather: Display the weather given a city, (optionally) a country and date.
 The date format needs to be in ISO8601 => YYYY-MM-DDTHH:mm:ssZ  
-**!weather City, Country, Date**
+**!weather City, ?Country, Date**
 - location: Display the latitude and longitude values given a city (and optionally a country) rounded to 4 decimals.  
   **!location City,?Country**
 - minMax: Get the highest and lowest temperature given city,country and date
