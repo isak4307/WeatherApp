@@ -2,14 +2,14 @@
 
 module Parser where
 
+import Data.Char (isDigit)
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Time
+import Data.Time (UTCTime, defaultTimeLocale, parseTimeM)
 import Text.Megaparsec
   ( MonadParsec (try),
     anySingle,
     eof,
-    manyTill,
     optional,
     satisfy,
     some,
@@ -17,7 +17,6 @@ import Text.Megaparsec
   )
 import Text.Megaparsec.Char (char)
 import Types
-import Prelude hiding (fail)
 
 -- | Parse commands by seperating between the command and the arguments
 parseCommand :: Text -> Either PError Cmd
@@ -68,17 +67,21 @@ parseCurrentWeather =
     <*> pure Nothing
 
 -- | Parse the argument to create a Weather datatype
+-- To seperate between country and date, I have to use (not isDigit) Parser assumes there are no digits in countries
 parseWeather :: Parser Weather
 parseWeather =
   (Weather . T.pack <$> some (satisfy (/= ','))) -- Parse city
-    <*> ( char ','
+    <*> ( optional (char ',')
             *> optional (char ' ')
-            *> optional (try $ T.pack <$> manyTill (satisfy (/= ',')) (char ',')) -- Parse country
+            *> optional (try $ T.pack <$> some (satisfy (\c -> c /= ',' && not (isDigit c)))) -- Parse country
         )
     <*> ( do
+            _ <- optional (char ',')
             _ <- optional (char ' ')
-            dateText <- T.pack <$> someTill anySingle eof -- Parse the date text
-            Just <$> parseDate dateText
+            dateText <- optional $ T.pack <$> someTill anySingle eof -- Parse the date text
+            case dateText of
+              Nothing -> pure Nothing
+              Just d -> pure <$> parseDate d
         )
 
 -- | Convert the input text to the appropriate UTCTime value
