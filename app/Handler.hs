@@ -35,15 +35,6 @@ handleWeather args =
       wData <- fetchWeather weather
       return (wData, weather)
 
--- | Handle parsing and getting the WeatherData
-handleCurrentWeather :: Text -> ExceptT ErrorTypes IO (WeatherData, Weather)
-handleCurrentWeather args =
-  case runParser parseCurrentWeather "" args of
-    Left (ParseErrorBundle _ err) -> throwError $ ParseErr (InvalidFormat (T.pack $ show err))
-    Right weather -> do
-      wData <- fetchWeather weather
-      return (wData, weather)
-
 -- | Handle Min Max weather
 handleMinMax :: WeatherData -> UTCTime -> Weather -> ExceptT ErrorTypes IO Text
 handleMinMax wData d weather = do
@@ -88,18 +79,6 @@ handleCommand (WeatherCmd args) = do
 
       return $ display wData weather {date = Just time'}
 
--- \| Handle Getting the current weather data
-handleCommand (CurrentWeatherCmd args) = do
-  result <- liftIO $ runExceptT $ handleCurrentWeather args
-  case result of
-    Left err -> throwError err
-    Right (wData, weather) -> do
-      time' <- liftIO $
-        case date weather of
-          Nothing -> currentTime
-          Just d -> pure d
-      return $ display wData weather {date = Just time'}
-
 -- \| Handle Getting the highest and lowest temperature for the given day
 handleCommand (MinMaxWeatherCmd args) = do
   result <- liftIO $ runExceptT $ handleWeather args
@@ -113,6 +92,6 @@ handleCommand (MinMaxWeatherCmd args) = do
             Left e -> throwError e
             Right minMax -> return minMax
         Nothing -> return $ T.pack $ show $ MissingVal "Unable to fetch the appropriate date"
-
+  
 -- \| Handle mistyped/non-existing commands
 handleCommand _ = return $ T.pack $ show $ UnknownCommand "Something went wrong with the given command"

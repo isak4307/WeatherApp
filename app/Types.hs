@@ -242,10 +242,10 @@ instance FromJSON NominatimResponse where
 data Cmd
   = Quit
   | Help
-  | CurrentWeatherCmd Text
   | WeatherCmd Text
   | LocationCmd Text
   | MinMaxWeatherCmd Text
+  | WeekWeatherCmd Text
   deriving (Show, Eq)
 
 -- | Error Types
