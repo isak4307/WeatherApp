@@ -11,6 +11,7 @@ import Data.Time
     getCurrentTime,
     getZonedTime,
   )
+import Data.Time.Calendar (addDays)
 import Data.Time.LocalTime (TimeZone (..))
 import Types
 
@@ -79,7 +80,36 @@ getSpecificTimeSeries w targetTime = do
   timeSeries <- find (\ts -> ts ^. time == Just targetTime) tsList
   timeSeries ^. timeData
 
+getWeeklyTimeSeries :: WeatherData -> UTCTime -> [(Maybe TimeSeriesData, UTCTime)]
+getWeeklyTimeSeries w targetTime =
+  let res = [(getSpecificTimeSeries w targetTime, targetTime)] -- Get the current timeSeries
+      roundedTime = roundToNearestQuarter targetTime
+   in foldl (\ls day -> ls <> [(getSpecificTimeSeries w (nextDay roundedTime day), nextDay roundedTime day)]) res [1 .. 6] -- get the rest of the following timeseries
+
 --- TIME HELPER FUNCTIONS
+
+-- | List of quarter times such as 00:00, 06:00, 12:00 and 18:00
+targetTimes :: [Int]
+targetTimes = [0, 6 * 3600, 12 * 3600, 18 * 3600]
+
+-- | Round the time to the nearest quarter which is one of the alternatives in targetTimes
+roundToNearestQuarter :: UTCTime -> UTCTime
+roundToNearestQuarter t =
+  let seconds = round (utctDayTime t) `mod` (24 * 3600) -- Convert the the time variable to seconds
+      diffs = fmap (\v -> (v, abs (seconds - v))) targetTimes -- Get the difference between the time and the targettimes
+      -- Iterate through the list of tuples to determine which quarter time has the smallest difference. That would be the time we set
+      (closestTarget, _) =
+        foldl
+          ( \(closest, mindiff) (current, currdiff) ->
+              if currdiff < mindiff then (current, currdiff) else (closest, mindiff)
+          )
+          (head diffs)
+          diffs
+   in addUTCTime (fromIntegral (closestTarget - seconds)) t
+
+-- | Get the next day
+nextDay :: UTCTime -> Integer -> UTCTime
+nextDay time' n = time' {utctDay = addDays n (utctDay time')}
 
 -- | Get the current time and convert it according to the timezone
 currentTime :: IO UTCTime

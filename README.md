@@ -37,6 +37,8 @@ If no date has been inputted, the default value would be the current date and th
 - minMax: Get the highest and lowest temperature given city,country and date
 The date format needs to be in ISO8601 => YYYY-MM-DDTHH:mm:ssZ  
 **!minMax City,Country,date**
+- week: Display the weather data for the next 7 days given a city, optionally a country and optionally a date.
+  **!week City, ?Country,?Date**
 - quit: Exit the application (currently doesn't work in discord bot)
 **!quit**
 - help: Display all available commands

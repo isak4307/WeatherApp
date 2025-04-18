@@ -92,6 +92,23 @@ handleCommand (MinMaxWeatherCmd args) = do
             Left e -> throwError e
             Right minMax -> return minMax
         Nothing -> return $ T.pack $ show $ MissingVal "Unable to fetch the appropriate date"
-  
+
+-- \| Handle weekly weather data
+handleCommand (WeekWeatherCmd args) = do
+  result <- liftIO $ runExceptT $ handleWeather args
+  case result of
+    Left err -> throwError err
+    Right (wData, weather) -> do
+      time' <- liftIO $
+        case date weather of
+          Just d -> pure d
+          Nothing -> currentTime
+      return $
+        T.pack (show $ city weather)
+          <> "s weather for the next 7 days:\n"
+          <> displayWeekly (getWeeklyTimeSeries wData time')
+          <> " Weather data provided by MET Norway"
+          <> " and Nominatim/OpenStreetMap (Latitude and Longitude)"
+
 -- \| Handle mistyped/non-existing commands
 handleCommand _ = return $ T.pack $ show $ UnknownCommand "Something went wrong with the given command"
