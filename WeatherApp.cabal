@@ -100,7 +100,7 @@ executable WeatherApp
                     , aeson >=2.0 && <3.0
                     , time 
                     , lens >=5.3.4  
-                    , QuickCheck  
+                    , QuickCheck
                     , quickcheck-instances
     
     ghc-options: -fplugin=Polysemy.Plugin
@@ -152,7 +152,7 @@ library
                     , aeson >=2.0 && <3.0
                     , time 
                     , lens >=5.3.4  
-                    , QuickCheck  
+                    , QuickCheck
                     , quickcheck-instances
 
     ghc-options: -fplugin=Polysemy.Plugin
@@ -171,6 +171,8 @@ test-suite WeatherApp-test
     -- Modules included in this executable, other than Main.
     other-modules: TParser
                  , THandler
+                 , TUtils
+                 , GenUtils
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

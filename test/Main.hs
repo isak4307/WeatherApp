@@ -2,7 +2,10 @@ module Main (main) where
 
 import THandler
 import TParser
+import TUtils
+
 main :: IO ()
 main = do
-    testHandler
-    testParser
+  testUtils
+  testHandler
+  testParser

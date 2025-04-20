@@ -23,15 +23,13 @@ testHandler = do
   -- Checkt that invalid commands won't be successfully parsed
   quickCheck test_invalid_parseCommand
 
-instance Arbitrary Text where
-  arbitrary = T.pack <$> arbitrary
 
 -- | parseCommand should only parse certain commands that start with ! and whether they have arguments or not
 test_valid_parseCommand :: Property
-test_valid_parseCommand = forAll (elements ["!quit", "!help", "!weather", "!location", "!minMax"]) $ \cmd ->
+test_valid_parseCommand = forAll (elements ["!quit", "!help", "!weather", "!location", "!minMax", "!week"]) $ \cmd ->
   case parseCommand (T.pack cmd) of
     -- these commands go to Left ArgumentError since these need to have arguments
-    Left _ -> T.pack cmd `elem` ["!minMax", "!weather", "!location"]
+    Left _ -> T.pack cmd `elem` ["!minMax", "!weather", "!location", "!week"]
     -- these commands go to Right Text, since these don't need to have arguments
     Right _ -> T.pack cmd `elem` ["!quit", "!help"]
 
@@ -41,3 +39,6 @@ test_invalid_parseCommand input =
    in case parseCommand cmdInp of
         Left UnknownCommand {} -> True
         _ -> False
+
+instance Arbitrary Text where
+  arbitrary = T.pack <$> arbitrary
