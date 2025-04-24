@@ -256,13 +256,24 @@ data PError
   | UnknownCommand Text
   | ArgumentError Text
   | InvalidFormat Text
-  deriving (Show, Ord, Eq)
+  deriving (Ord, Eq)
+
+instance Show PError where
+  show EmptyInput = "EmptyInput"
+  show (UnknownCommand v) = "UnknownCommand: " <> unpack v
+  show (ArgumentError v) = "ArgumentError: " <> unpack v
+  show (InvalidFormat v) = "InvalidFormat: " <> unpack v
 
 data ErrorTypes
   = APIError ClientError
   | MissingVal Text
   | ParseErr PError
-  deriving (Show, Eq)
+  deriving (Eq)
+
+instance Show ErrorTypes where
+  show (APIError c) = "APIError: " <> show c
+  show (MissingVal val) = "MissingVal: " <> unpack val
+  show (ParseErr pe) = "ParseError ==> " <> show pe
 
 -- | Input weather data type
 data Weather = Weather
