@@ -156,9 +156,9 @@ instance Show InstantDetails where
       <> "- Wind: "
       <> maybe (show $ MissingVal "Wind not available") (\w -> show w <> " km/h") (_windSpeed inDetails)
       <> "\n"
-      <> "- WindDirection: "
+      <> "- Wind Direction: "
       -- Have to unpack instead of show for utf-8 to work (arrows)
-      <> maybe (show $ MissingVal "Winddirection not available") (\d -> unpack (windDir d) <> " (" <> show d <> "°)") (_windFromDirection inDetails)
+      <> maybe (show $ MissingVal "wind direction not available") (\d -> unpack ((windDir . degToDir) d) <> " (" <> show d <> "°)") (_windFromDirection inDetails)
       <> "\n"
       <> "- Cloud Coverage: "
       <> maybe (show $ MissingVal "CloudCoverage not available") (\c -> show c <> "%") (_cloudAreaFraction inDetails)
@@ -166,14 +166,23 @@ instance Show InstantDetails where
       <> "- Air Pressure: "
       <> maybe (show $ MissingVal "Airpressure not available") (\p -> show p <> " hPa") (_airPressureAtSeaLevel inDetails)
 
--- | Converts the windirection degree to text directions
-windDir :: Double -> Text
-windDir direction
-  | direction >= 0 && direction < 90 = "↓ (north)"
-  | direction >= 90 && direction < 180 = "← (east)"
-  | direction >= 180 && direction < 270 = "↑ (south)"
-  | direction >= 270 && direction < 360 = "→ (west)"
+-- | Converts the direction degree to text directions
+degToDir :: Double -> Text
+degToDir direction
+  | direction >= 0 && direction < 90 = "(north)"
+  | direction >= 90 && direction < 180 = "(east)"
+  | direction >= 180 && direction < 270 = "(south)"
+  | direction >= 270 && direction < 360 = "(west)"
   | otherwise = pack $ show (InvalidFormat "Invalid input :")
+
+-- | Adds a directional arrow for where the wind comes from
+windDir :: Text -> Text
+windDir t
+  | "(north)" == t = "↓ " <> t
+  | "(east)" == t = "← " <> t
+  | "(south)" == t = "↑ " <> t
+  | "(west)" == t = "→ " <> t
+  | otherwise = ""
 
 data SummaryDetails = SummaryDetails
   { _probabilityOfPrecipitation :: Maybe Double,
@@ -238,6 +247,75 @@ instance FromJSON NominatimResponse where
       <*> v .: "lon"
       <*> v .: "display_name"
 
+-- Sunset/Sunrise
+
+data Sun = Sun
+  { cityS :: Text,
+    countryS :: Maybe Text,
+    dateS :: Text
+  }
+instance Show Sun where 
+  show (Sun city' (Just country') date') = "City: " <> unpack city' <> "\n Country: " <> unpack country' <> "\n Date: " <> show date'
+  show (Sun city' Nothing date') = "City: " <> unpack city' <> "\n Date: " <> show date'
+
+newtype SunData = SunData {_sunProperties :: Maybe SunProperties}
+  deriving (Show, Generic)
+
+data SunProperties = SunProperties
+  { _sunBody :: Maybe Text,
+    _sunrise :: Maybe Sunrise,
+    _sunset :: Maybe Sunset
+  }
+  deriving (Show, Generic)
+
+data Sunrise = Sunrise
+  { _sunriseTime :: Maybe UTCTime,
+    _sunriseAzimuth :: Maybe Double
+  }
+  deriving (Generic)
+
+instance Show Sunrise where
+  show sunrise =
+    "Sunrise at time: "
+      <> maybe (show $ MissingVal "Date not available") (\t -> show t <> "\n") (_sunriseTime sunrise)
+      <> maybe (show $ MissingVal "Sunrise direction not available") (\dir -> "Sunrise direction: " <> unpack (degToDir dir) <> " (" <> show dir <> "°)") (_sunriseAzimuth sunrise)
+
+data Sunset = Sunset
+  { _sunsetTime :: Maybe UTCTime,
+    _sunsetAzimuth :: Maybe Double
+  }
+  deriving (Generic)
+
+instance Show Sunset where
+  show sunset =
+    "Sunset at time: "
+      <> maybe (show $ MissingVal "Date not available") (\t -> show t <> "\n") (_sunsetTime sunset)
+      <> maybe (show $ MissingVal "Sunset direction not available") (\dir -> "Sunset direction: " <> unpack (degToDir dir) <> " (" <> show dir <> "°)") (_sunsetAzimuth sunset)
+
+instance FromJSON SunData where
+  parseJSON = withObject "SunData" $ \v ->
+    SunData
+      <$> v .:? "properties"
+
+instance FromJSON SunProperties where
+  parseJSON = withObject "properties" $ \v ->
+    SunProperties
+      <$> v .:? "body"
+      <*> v .:? "sunrise"
+      <*> v .:? "sunset"
+
+instance FromJSON Sunrise where
+  parseJSON = withObject "sunrise" $ \v ->
+    Sunrise
+      <$> v .:? "time"
+      <*> v .:? "azimuth"
+
+instance FromJSON Sunset where
+  parseJSON = withObject "sunrise" $ \v ->
+    Sunset
+      <$> v .:? "time"
+      <*> v .:? "azimuth"
+
 -- | Data types Commands
 data Cmd
   = Quit
@@ -246,6 +324,7 @@ data Cmd
   | LocationCmd Text
   | MinMaxWeatherCmd Text
   | WeekWeatherCmd Text
+  | SunCmd Text
   deriving (Show, Eq)
 
 -- | Error Types
@@ -311,3 +390,7 @@ makeLenses ''InstantDetails
 makeLenses ''SummaryDetails
 makeLenses ''Summary
 makeLenses ''SumDetail
+makeLenses ''SunData
+makeLenses ''Sunrise
+makeLenses ''Sunset
+makeLenses ''SunProperties

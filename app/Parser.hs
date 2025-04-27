@@ -43,6 +43,10 @@ parseCommand inp = do
       case args of
         "" -> Left $ ArgumentError "No arguments provided, need at least city and date"
         _ -> Right $ WeekWeatherCmd args
+    "!sun" ->
+      case args of
+        "" -> Left $ ArgumentError "No arguments provided, need at least city and date"
+        _ -> Right $ SunCmd args
     _ -> Left $ UnknownCommand $ "The following command: " <> cmd <> " is invalid"
 
 -- | Parse the argument to create a Location datatype
@@ -76,3 +80,16 @@ parseWeather =
 -- | Convert the input text to the appropriate UTCTime value
 parseDate :: Text -> Parser UTCTime
 parseDate dateT = do parseTimeM True defaultTimeLocale "%FT%T%QZ" (T.unpack dateT)
+
+parseSun :: Parser Sun
+parseSun =
+  (Sun . T.pack <$> some (satisfy (/= ','))) -- Parse city
+    <*> ( optional (char ',')
+            *> optional (char ' ')
+            *> optional (try $ T.pack <$> some (satisfy (\c -> c /= ',' && not (isDigit c)))) -- Parse maybe country
+        )
+    <*> ( do
+            _ <- optional (char ',')
+            _ <- optional (char ' ')
+            T.pack <$> someTill anySingle eof
+        ) -- Parse date

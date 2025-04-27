@@ -75,6 +75,21 @@ displayWeather weatherData targetTime =
                     <> "\n Weather data provided by MET Norway"
                     <> " and Nominatim/OpenStreetMap (Latitude and Longitude)"
 
+-- | Display the sunrise and sunset data
+displaySun :: SunData -> Text
+displaySun sd =
+  case sd ^. sunProperties of
+    Nothing -> T.pack $ show $ MissingVal "Cannot find the sundata"
+    Just sunProps -> do
+      let sunriseTxt =
+            case sunProps ^. sunrise of
+              Nothing -> T.pack $ show $ MissingVal "Cannot find data for sunrise"
+              Just sunrise' -> T.pack $ show sunrise'
+      let sunsetTxt = case sunProps ^. sunset of
+            Nothing -> T.pack $ show $ MissingVal "Cannot find data for sunset"
+            Just sunset' -> T.pack $ show sunset'
+      sunriseTxt <> "\n\n" <> sunsetTxt <> "\n\n"
+
 -- | Display the help menu
 displayCommands :: Text
 displayCommands =
@@ -89,6 +104,8 @@ displayCommands =
     <> " The date format needs to be in ISO8601 => YYYY-MM-DDTHH:mm:ssZ \n"
     <> " !minMax City,Country,Date\n\n"
     <> " week: Display the weather data for the next 7 days given a city, optionally a country and optionally a date\n"
-    <> " !week City, ?Country,?Date"
+    <> " !week City, ?Country,?Date\n\n"
+    <> " sun: Display the time and direction of sunrise and sunset given the city, optionally a country and date\n"
+    <> " !sun City, ?Country, Date\n\n"
     <> " !quit: Exit the application\n\n"
     <> " !help: Display all available commands"

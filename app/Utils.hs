@@ -1,17 +1,22 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Utils where
 
 import Control.Lens ((^.))
 import Data.List (find)
 import Data.Maybe (fromJust, mapMaybe)
+import Data.Text (Text, unpack)
 import Data.Time
   ( Day,
     UTCTime (..),
     ZonedTime (..),
     addUTCTime,
+    defaultTimeLocale,
     getCurrentTime,
     getZonedTime,
   )
 import Data.Time.Calendar (addDays)
+import Data.Time.Format (parseTimeM)
 import Data.Time.LocalTime (TimeZone (..))
 import Types
 
@@ -144,3 +149,9 @@ checkValidTime ts inpDate =
           inpTime' = utctDayTime inpDate
        in inpTime' <= time'
     Nothing -> False
+
+-- | Check if the date is formatted like this: YYYY-MM-DD
+checkDateFormat :: Text -> Bool
+checkDateFormat d = case parseTimeM True defaultTimeLocale "%Y-%m-%d" (unpack d) of
+  Just (_ :: Day) -> True
+  Nothing -> False

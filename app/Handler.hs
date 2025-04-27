@@ -35,14 +35,14 @@ handleWeather args =
       wData <- fetchWeather weather
       return (wData, weather)
 
--- | Handle Min Max weather
+-- | Handle parsing and getting the Min Max temperature
 handleMinMax :: WeatherData -> UTCTime -> Weather -> ExceptT ErrorTypes IO Text
 handleMinMax wData d weather = do
   let ts = filterWeatherByDate wData (utctDay d)
   minTempRes <- case getMin ts d of
     Just (ts', minTemp) ->
       case ts' ^. time of
-        Just minTempDate -> return $ "Min temperature: " <> show minTemp <> " with this weather:\n" <> T.unpack (display wData weather {date = Just minTempDate})
+        Just minTempDate -> return $ "Min temperature: " <> show minTemp <> " with this weather:\n" <> T.unpack (display wData weather {date = Just minTempDate}) <> "\n"
         Nothing -> throwError $ MissingVal "Unable to get corresponding date for the lowest temperature\n"
     Nothing -> throwError $ MissingVal "Unable to fetch the lowest temperature\n"
   maxTempRes <- case getMax ts d of
@@ -52,6 +52,13 @@ handleMinMax wData d weather = do
         Nothing -> throwError $ MissingVal "Unable to get the corresponding date for the highest temperature\n"
     Nothing -> throwError $ MissingVal "Unable to fetch the highest temperature\n"
   return (T.pack $ minTempRes <> maxTempRes)
+
+-- | Handle parsing and getting the Sunrise and Sunset data
+handleSun :: Text -> ExceptT ErrorTypes IO (Sun, SunData)
+handleSun args =
+  case runParser parseSun "" args of
+    Left (ParseErrorBundle _ err) -> throwError $ ParseErr $ InvalidFormat $ T.pack $ show err
+    Right sun -> fetchSun sun
 
 -- | Handler for all the commandtypes
 handleCommand :: Cmd -> ExceptT ErrorTypes IO Text
@@ -109,6 +116,19 @@ handleCommand (WeekWeatherCmd args) = do
           <> displayWeekly (getWeeklyTimeSeries wData time')
           <> " Weather data provided by MET Norway"
           <> " and Nominatim/OpenStreetMap (Latitude and Longitude)"
+
+-- \| Handle sunset/sunrise command
+handleCommand (SunCmd args) = do
+  result <- liftIO $ runExceptT $ handleSun args
+  case result of
+    Left err -> throwError err
+    Right v ->
+      return $
+              (T.pack . show $ fst v)
+              <> "\n"
+              <> displaySun (snd v)
+              <> "Sunset and Sunrise data provided by MET Norway"
+              <> " and Nominatim/OpenStreetMap (Latitude and Longitude)"
 
 -- \| Handle mistyped/non-existing commands
 handleCommand _ = return $ T.pack $ show $ UnknownCommand "Something went wrong with the given command"
