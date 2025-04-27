@@ -3,7 +3,7 @@ This is a weather application that can display weather data through a discord bo
 
 ## Data Sources (Credits):
   This application uses data from the following sources:
-  - Weather data from [MET Norway](https://www.met.no/)
+  - Weather data and sunset/sunrise data from [MET Norway](https://www.met.no/)
     Which is licensed under [Norwegian License for Open Government Data (NLOD) 2.0](https://data.norge.no/nlod/en/2.0) and [Creative Commons 4.0 BY International](https://creativecommons.org/licenses/by/4.0/)
     For more information visit: https://api.met.no/doc/License
 
@@ -40,12 +40,12 @@ The date format needs to be in ISO8601 => YYYY-MM-DDTHH:mm:ssZ
 - week: Display the weather data for the next 7 days given a city, optionally a country and optionally a date.
   **!week City, ?Country,?Date**
 - sun: Get the sunrise and sunset time and its direction given the city, optionally a country and a date 
-The date format needs to be like this: YYYY-MM-DD
-**!sun City,?Country, Date**
-- quit: Exit the application (currently doesn't work in discord bot)
-**!quit**
-- help: Display all available commands
-**!help**
+The date format needs to be like this: YYYY-MM-DD  
+  **!sun City,?Country, Date**
+- quit: Exit the application (currently doesn't work in discord bot)  
+  **!quit**
+- help: Display all available commands  
+  **!help**
 
 
 
