@@ -19,7 +19,7 @@ testHandler = do
   quickCheck $ parseCommand "" == Left EmptyInput
   -- Check that giving valid commands will be successfully parsed
   quickCheck test_valid_parseCommand
-  -- Checkt that invalid commands won't be successfully parsed
+  -- Check that invalid commands won't be successfully parsed
   quickCheck test_invalid_parseCommand
 
 -- | parseCommand should only parse certain commands that start with ! and whether they have arguments or not
@@ -31,6 +31,7 @@ test_valid_parseCommand = forAll (elements ["!quit", "!help", "!weather", "!loca
     -- these commands go to Right Text, since these don't need to have arguments
     Right _ -> T.pack cmd `elem` ["!quit", "!help"]
 
+-- | Check that input that contains ! at the start and not a valid command is not parsed
 test_invalid_parseCommand :: GenText -> Bool
 test_invalid_parseCommand (GenText input) =
   let cmdInp = "!" <> input

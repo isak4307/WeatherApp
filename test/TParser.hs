@@ -38,7 +38,7 @@ testParser = do
   quickCheck $ forAll nonEmptyText $ \city' ->
     forAll nonEmptyText $ \country' -> test_parseGeoLocation (GenText city') (GenText country')
 
-  -- Checkt that Sun parsing
+  -- Check that Sun parsing
   quickCheck $ forAll nonEmptyText $ \city' ->
     forAll nonEmptyTextWithoutDigits $ \country' ->
       forAll dateOnlyGen $ \date' ->
@@ -47,6 +47,7 @@ testParser = do
     forAll dateOnlyGen $ \date' ->
       test_parseSun (GenText city') (GenText "") (GenText date')
 
+-- | Check that city and country inputted are the same after being parsed , and that weather is Nothing
 test_parseCurrentWeather :: GenText -> GenText -> Bool
 test_parseCurrentWeather (GenText city') (GenText country') =
   let inp = if T.null (T.strip country') then city' else city' <> "," <> country'
@@ -60,6 +61,7 @@ test_parseCurrentWeather (GenText city') (GenText country') =
                 Nothing -> T.null country'
            in (compareCity == compareCountry) == isNothing (date weather)
 
+-- | Check that the inputted city country and date are still the same values after being parsed
 test_parseWeather :: GenText -> GenText -> GenText -> Bool
 test_parseWeather (GenText city') (GenText country') (GenText date') =
   let inp = city' <> "," <> country' <> "," <> date'
@@ -76,6 +78,7 @@ test_parseWeather (GenText city') (GenText country') (GenText date') =
                 Nothing -> T.null date'
            in compareCity && compareCountry && compareDate
 
+-- | Check that the inputted city and country have the same value after being parsed
 test_parseGeoLocation :: GenText -> GenText -> Bool
 test_parseGeoLocation (GenText city') (GenText country') =
   let inp = if T.null country' then city' else city' <> "," <> country'
@@ -89,6 +92,7 @@ test_parseGeoLocation (GenText city') (GenText country') =
                 Nothing -> T.null country'
            in compareCity == compareCountry
 
+-- | Check that the inputted city and country and date have the same value after being parsed
 test_parseSun :: GenText -> GenText -> GenText -> Bool
 test_parseSun (GenText city') (GenText country') (GenText date') =
   let inp = city' <> "," <> country' <> "," <> date'

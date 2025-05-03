@@ -6,38 +6,23 @@ module GenUtils where
 import Data.Char (isAscii, isDigit, isPrint)
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Time (UTCTime)
-import Data.Time.Format (defaultTimeLocale, parseTimeM)
-import Test.QuickCheck (Arbitrary, Gen, arbitrary, choose, listOf1, suchThat)
-import Text.Printf (printf)
+import Data.Time (UTCTime, formatTime)
+import Data.Time.Format (defaultTimeLocale)
+import Test.QuickCheck (Arbitrary, Gen, arbitrary, listOf1, suchThat)
+import Test.QuickCheck.Instances.Time ()
 
 -- | Generate mock utctimes used for tests
 dateGen :: Gen Text
 dateGen = do
-  year :: Int <- choose (1000, 9999)
-  month :: Int <- choose (1, 12)
-  day :: Int <- choose (1, 27) -- can't bother checking when it should be 31 or 30 depending on the month
-  hour :: Int <- choose (0, 23)
-  minute :: Int <- choose (0, 59)
-  second :: Int <- choose (0, 59)
-  let utcT = T.pack (printf "%04d-%02d-%02dT%02d:%02d:%02dZ" year month day hour minute second)
-  return utcT
+  utcTime <- arbitrary :: Gen UTCTime
+  let formatT = formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" utcTime
+  return $ T.pack formatT
 
--- | Generate mock dates without the time used for parseSun tests
 dateOnlyGen :: Gen Text
 dateOnlyGen = do
-  year :: Int <- choose (1000, 9999)
-  month :: Int <- choose (1, 12)
-  day :: Int <- choose (1, 28)
-  return (T.pack (printf "%04d-%02d-%02d" year month day))
-
-genUTCTime :: Gen UTCTime
-genUTCTime = do
-  date <- dateGen
-  let parsedTime = parseTimeM True defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" (T.unpack date) :: Maybe UTCTime
-  case parsedTime of
-    Just utcTime -> return utcTime
-    Nothing -> error "Generated text could not be parsed into UTCTime"
+  utcTime <- arbitrary :: Gen UTCTime
+  let formatT = formatTime defaultTimeLocale "%Y-%m-%d" utcTime
+  return $ T.pack formatT
 
 -- | Generate nonempty text + no digits allowed since parser can't allow country to have digits
 nonEmptyTextWithoutDigits :: Gen Text
@@ -54,7 +39,7 @@ nonEmptyText = T.pack <$> listOf1 (arbitrary `suchThat` validChar)
 validChars :: Char -> Bool
 validChars c = c /= ',' && isPrint c && c /= '\\' && isAscii c
 
--- | Created a wrapper type so that there won't be any orphans
+-- | Created a wrapper type so that there won't be any orphan warnings
 newtype GenText = GenText Text
   deriving (Show)
 

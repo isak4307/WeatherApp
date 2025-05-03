@@ -1,27 +1,29 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module TUtils where
 
-import qualified Data.Text as T
 import Data.Time
-import GenUtils
 import Test.QuickCheck
+import Test.QuickCheck.Instances.Time ()
 import Utils
--- TODO have to test more functions, don't know what functions to test that makes sense/ isn't too complicated
-testUtils :: IO ()
-testUtils = quickCheck $ forAll genUTCTime $ \t -> test_roundToNearestQuarter t
 
+testUtils :: IO ()
+testUtils = do
+  quickCheck test_roundToNearestQuarter
+  quickCheck test_roundToExactlyHour
+
+-- | Check that the time will always be one of the quarters in 24 hours
 test_roundToNearestQuarter :: UTCTime -> Bool
 test_roundToNearestQuarter t =
   let roundedT = roundToNearestQuarter t
       roundedSeconds = round (utctDayTime roundedT) `mod` (24 * 3600)
    in roundedSeconds `elem` targetTimes
 
-genUTCTime :: Gen UTCTime
-genUTCTime = do
-  date <- dateGen
-  let parsedTime = parseTimeM True defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" (T.unpack date) :: Maybe UTCTime
-  case parsedTime of
-    Just utcTime -> return utcTime
-    Nothing -> error "Generated text could not be parsed into UTCTime"
+-- | Check that the time that is converted is on the hour marker aka 0 minutes
+test_roundToExactlyHour :: UTCTime -> Bool
+test_roundToExactlyHour t =
+  let roundedT = roundToNearestHour t
+      secondsPerHour = 3600 :: Int
+      seconds = round (utctDayTime roundedT) :: Int
+   in -- It should give 0 since the seconds are exactly 0 when it is a whole hour
+      seconds `mod` secondsPerHour == 0
