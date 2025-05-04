@@ -17,11 +17,11 @@ import Types
 
 testParser :: IO ()
 testParser = do
-  -- Check that weather is able to parse without date
+  -- Check that weather is able to parse with city and country
   quickCheck $ forAll nonEmptyText $ \city' ->
     forAll nonEmptyTextWithoutDigits $ \country' ->
       test_parseCurrentWeather (GenText city') (GenText country')
-  -- Check that weather is able to parse every input field
+  -- Check that weather is able to parse with every input field
   quickCheck $ forAll nonEmptyText $ \city' ->
     forAll nonEmptyTextWithoutDigits $ \country' ->
       forAll dateGen $ \date' ->
@@ -30,15 +30,15 @@ testParser = do
   quickCheck $ forAll nonEmptyText $ \city' ->
     forAll dateGen $ \date' ->
       test_parseWeather (GenText city') (GenText "") (GenText date')
-  -- Check that weather is able to parse without country
+  -- Check that weather is able to parse with city only
   quickCheck $ forAll nonEmptyText $ \city' -> test_parseCurrentWeather (GenText city') (GenText "")
 
-  -- Check that Location parsing
+  -- Check that Location parses with and without country
   quickCheck $ forAll nonEmptyText $ \city' -> test_parseGeoLocation (GenText city') (GenText "")
   quickCheck $ forAll nonEmptyText $ \city' ->
     forAll nonEmptyText $ \country' -> test_parseGeoLocation (GenText city') (GenText country')
 
-  -- Check that Sun parsing
+  -- Check that Sun parses with and without country
   quickCheck $ forAll nonEmptyText $ \city' ->
     forAll nonEmptyTextWithoutDigits $ \country' ->
       forAll dateOnlyGen $ \date' ->
@@ -47,7 +47,7 @@ testParser = do
     forAll dateOnlyGen $ \date' ->
       test_parseSun (GenText city') (GenText "") (GenText date')
 
--- | Check that city and country inputted are the same after being parsed , and that weather is Nothing
+-- | Check that city and country inputted are the same after being parsed , and that date is Nothing
 test_parseCurrentWeather :: GenText -> GenText -> Bool
 test_parseCurrentWeather (GenText city') (GenText country') =
   let inp = if T.null (T.strip country') then city' else city' <> "," <> country'

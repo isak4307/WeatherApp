@@ -16,8 +16,9 @@ import qualified Data.Text as T
 import Data.Time ()
 import qualified Di
 import DiPolysemy
+import Display
 import Handler
-import Optics
+import Optics ((^.))
 import Parser (parseCommand)
 import qualified Polysemy as P
 import Types
@@ -37,20 +38,15 @@ discord = do
       $ runBotIO (BotToken token') defaultIntents
       $ do
         react @'MessageCreateEvt $ \(msg', _usr, _member) -> do
-          -- debug
-          info @Text $ "Received message: " <> (msg' ^. #content)
-          --
           let content' = msg' ^. #content
           when (T.head content' == '!') $ do
-            let parseInp = parseCommand content'
-            case parseInp of
-              Left e -> do
-                void $ tell @Text msg' ("Error: " <> T.pack (show e))
-              Right Quit -> do
-                void $ tell @Text msg' "Exiting Application"
+            -- Parse the input command
+            case parseCommand content' of
+              Left e -> void $ tell @Text msg' (toText e)
+              Right Quit -> void $ tell @Text msg' "Exiting Application"
               Right Help -> void $ tell @Text msg' displayCommands
               Right cmd -> do
                 v <- P.embed $ runExceptT $ handleCommand cmd
                 case v of
-                  Left err' -> void $ tell @Text msg' (T.pack $ "Error: " <> show err')
+                  Left err' -> void $ tell @Text msg' (toText err')
                   Right res -> void $ tell @Text msg' res

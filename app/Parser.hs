@@ -29,7 +29,7 @@ parseCommand inp = do
     "!help" -> Right Help
     "!weather" ->
       case args of
-        "" -> Left $ ArgumentError "No arguments provided, need at least city and date"
+        "" -> Left $ ArgumentError "No arguments provided, need at least city"
         _ -> Right $ WeatherCmd args
     "!location" ->
       case args of
@@ -37,11 +37,11 @@ parseCommand inp = do
         _ -> Right $ LocationCmd args
     "!minMax" ->
       case args of
-        "" -> Left $ ArgumentError "No arguments provided, need at least city and date"
+        "" -> Left $ ArgumentError "No arguments provided, need at least city"
         _ -> Right $ MinMaxWeatherCmd args
     "!week" ->
       case args of
-        "" -> Left $ ArgumentError "No arguments provided, need at least city and date"
+        "" -> Left $ ArgumentError "No arguments provided, need at least city"
         _ -> Right $ WeekWeatherCmd args
     "!sun" ->
       case args of
@@ -52,12 +52,12 @@ parseCommand inp = do
 -- | Parse the argument to create a Location datatype
 parseGeoLocation :: Parser Location
 parseGeoLocation =
-  (Location . T.pack <$> some (satisfy (/= ',')))
+  (Location . T.pack <$> some (satisfy (/= ','))) -- parse city
     <*> optional
       ( char ','
           *> optional (char ' ')
           *> (T.pack <$> someTill anySingle eof)
-      )
+      ) -- parse country
 
 -- | Parse the argument to create a Weather datatype
 -- To seperate between country and date, I have to use (not isDigit) Parser assumes there are no digits in countries
@@ -71,16 +71,17 @@ parseWeather =
     <*> ( do
             _ <- optional (char ',')
             _ <- optional (char ' ')
-            dateText <- optional $ T.pack <$> someTill anySingle eof -- Parse the date text
+            dateText <- optional $ T.pack <$> someTill anySingle eof -- Parse the date in text
             case dateText of
               Nothing -> pure Nothing
               Just d -> pure <$> parseDate d
         )
 
--- | Convert the input text to the appropriate UTCTime value
+-- | Convert the date text to the appropriate UTCTime format
 parseDate :: Text -> Parser UTCTime
 parseDate dateT = do parseTimeM True defaultTimeLocale "%FT%T%QZ" (T.unpack dateT)
 
+-- | Parse the input to create a sunrise and sunset type
 parseSun :: Parser Sun
 parseSun =
   (Sun . T.pack <$> some (satisfy (/= ','))) -- Parse city

@@ -11,7 +11,7 @@ import Data.Time.Format (defaultTimeLocale)
 import Test.QuickCheck (Arbitrary, Gen, arbitrary, listOf1, suchThat)
 import Test.QuickCheck.Instances.Time ()
 
--- | Generate mock utctimes used for tests
+-- | Generate mock utctimes in text format used for tests
 dateGen :: Gen Text
 dateGen = do
   utcTime <- arbitrary :: Gen UTCTime
@@ -29,13 +29,13 @@ nonEmptyTextWithoutDigits :: Gen Text
 nonEmptyTextWithoutDigits = do
   T.filter (not . isDigit) <$> nonEmptyText
 
--- | Generate nonempty text since that is mandatory for certain inputs to not be empty
+-- | Generate nonempty text since that is mandatory for city inputs to not be empty
 nonEmptyText :: Gen Text
 nonEmptyText = T.pack <$> listOf1 (arbitrary `suchThat` validChar)
   where
     validChar c = c /= ' ' && validChars c
 
--- | filter that filters out all invalid characters such as unicode (with \) ',' and non-printable characters (since the results needs to be printable)
+-- | Filters out all invalid characters such as unicode (with \) ',' and non-printable characters (since the results needs to be printable)
 validChars :: Char -> Bool
 validChars c = c /= ',' && isPrint c && c /= '\\' && isAscii c
 

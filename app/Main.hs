@@ -1,23 +1,27 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 import Control.Monad.Except (runExceptT)
 import qualified Data.Text as T
 import Discord
+import Display
 import Handler
 import Parser
 import Types
 
 main :: IO ()
-main = 
+main =
   -- Uncomment discord and comment out terminal if you want to run it through the discord bot
-  -- discord 
+  -- discord
   terminal
 
 -- FOR TERMINAL USAGE
-terminal :: IO()
+terminal :: IO ()
 terminal = do
   putStrLn "> Starting up the application, type !help for the list of available commands"
-  loop 
+  loop
+
 -- | Ensure that the program doesn't stop after one interaction
 loop :: IO ()
 loop = do
@@ -26,8 +30,8 @@ loop = do
   let cmd = parseCommand (T.pack inp)
   case cmd of
     Left e -> do
-      putStrLn $ "Error: " <> show e
-      loop    
+      putStrLn $ T.unpack $ "Error: " <> toText e
+      loop
     Right Quit -> putStrLn "Exiting Application"
     Right command -> do
       if command == Help
@@ -36,6 +40,6 @@ loop = do
         else do
           result <- runExceptT $ handleCommand command
           case result of
-            Left err -> print $ show err
+            Left err -> putStrLn $ T.unpack $ "Error: " <> toText err
             Right val -> putStrLn $ T.unpack val
       loop

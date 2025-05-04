@@ -17,7 +17,7 @@ testHandler :: IO ()
 testHandler = do
   -- Check that parsing a command without any arguments gives the error EmptyInput
   quickCheck $ parseCommand "" == Left EmptyInput
-  -- Check that giving valid commands will be successfully parsed
+  -- Check that inputting valid commands will be successfully parsed
   quickCheck test_valid_parseCommand
   -- Check that invalid commands won't be successfully parsed
   quickCheck test_invalid_parseCommand

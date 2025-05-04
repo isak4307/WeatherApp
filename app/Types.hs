@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
@@ -7,9 +6,8 @@ module Types where
 import Control.Lens (makeLenses)
 import Data.Aeson (FromJSON)
 import Data.Aeson.Types (FromJSON (parseJSON), withObject, (.:), (.:?))
-import Data.Text (Text, pack, unpack)
+import Data.Text (Text, pack)
 import Data.Time (UTCTime)
-import GHC.Generics (Generic)
 import Servant.Client (ClientError)
 import Text.Megaparsec (Parsec)
 
@@ -18,7 +16,6 @@ data WeatherData = WeatherData
   { _weatherType :: Maybe Text,
     _properties :: Maybe Properties
   }
-  deriving (Show, Generic)
 
 instance FromJSON WeatherData where
   parseJSON = withObject "WeatherData" $ \v ->
@@ -30,7 +27,6 @@ data Geometry = Geometry
   { _geoType :: Maybe Text,
     _coordinates :: Maybe [Double]
   }
-  deriving (Show, Generic)
 
 instance FromJSON Geometry where
   parseJSON = withObject "Geometry" $ \v ->
@@ -42,7 +38,6 @@ data TimeSeries = TimeSeries
   { _time :: Maybe UTCTime,
     _timeData :: Maybe TimeSeriesData
   }
-  deriving (Show, Generic)
 
 instance FromJSON TimeSeries where
   parseJSON = withObject "TimeSeries" $ \v ->
@@ -56,7 +51,6 @@ data TimeSeriesData = TimeSeriesData
     _next1Hour :: Maybe SumDetail,
     _next6Hours :: Maybe SumDetail
   }
-  deriving (Show, Generic)
 
 instance FromJSON TimeSeriesData where
   parseJSON = withObject "TimeSeriesData" $ \v ->
@@ -70,7 +64,6 @@ data SumDetail = SumDetail
   { _summary :: Maybe Summary,
     _details :: Maybe SummaryDetails
   }
-  deriving (Show, Generic)
 
 instance FromJSON SumDetail where
   parseJSON = withObject "SumDetail" $ \v ->
@@ -81,7 +74,6 @@ instance FromJSON SumDetail where
 newtype Summary = Summary
   { _symbolCode :: Maybe Text
   }
-  deriving (Show, Generic)
 
 instance FromJSON Summary where
   parseJSON = withObject "Summary" $ \v -> Summary <$> v .:? "symbol_code"
@@ -89,7 +81,6 @@ instance FromJSON Summary where
 newtype InstantData = InstantData
   { _detail :: Maybe InstantDetails
   }
-  deriving (Show, Generic)
 
 instance FromJSON InstantData where
   parseJSON = withObject "InstantData" $ \v -> InstantData <$> v .:? "details"
@@ -98,7 +89,6 @@ data Properties = Properties
   { _meta :: Maybe Meta,
     _timeseries :: Maybe [TimeSeries]
   }
-  deriving (Show, Generic)
 
 instance FromJSON Properties where
   parseJSON = withObject "Properties" $ \v ->
@@ -110,7 +100,6 @@ data Meta = Meta
   { _updatedAt :: Maybe UTCTime,
     _units :: Maybe Units
   }
-  deriving (Show, Generic)
 
 instance FromJSON Meta where
   parseJSON = withObject "Meta" $ \v ->
@@ -122,7 +111,6 @@ data Units = Units
   { _airPressureAtSeaLevelU :: Maybe Text,
     _airTemperatureU :: Maybe Text
   }
-  deriving (Show, Generic)
 
 instance FromJSON Units where
   parseJSON = withObject "Units" $ \v ->
@@ -137,7 +125,6 @@ data InstantDetails = InstantDetails
     _windFromDirection :: Maybe Double,
     _windSpeed :: Maybe Double
   }
-  deriving (Generic)
 
 instance FromJSON InstantDetails where
   parseJSON = withObject "InstantDetails" $ \v ->
@@ -148,42 +135,6 @@ instance FromJSON InstantDetails where
       <*> v .:? "wind_from_direction"
       <*> v .:? "wind_speed"
 
-instance Show InstantDetails where
-  show inDetails =
-    "- Temperature: "
-      <> maybe (show $ MissingVal "Temperature not available") (\t -> show t <> "°C") (_airTemperature inDetails)
-      <> "\n"
-      <> "- Wind: "
-      <> maybe (show $ MissingVal "Wind not available") (\w -> show w <> " km/h") (_windSpeed inDetails)
-      <> "\n"
-      <> "- Wind Direction: "
-      -- Have to unpack instead of show for utf-8 to work (arrows)
-      <> maybe (show $ MissingVal "wind direction not available") (\d -> unpack ((windDir . degToDir) d) <> " (" <> show d <> "°)") (_windFromDirection inDetails)
-      <> "\n"
-      <> "- Cloud Coverage: "
-      <> maybe (show $ MissingVal "CloudCoverage not available") (\c -> show c <> "%") (_cloudAreaFraction inDetails)
-      <> "\n"
-      <> "- Air Pressure: "
-      <> maybe (show $ MissingVal "Airpressure not available") (\p -> show p <> " hPa") (_airPressureAtSeaLevel inDetails)
-
--- | Converts the direction degree to text directions
-degToDir :: Double -> Text
-degToDir direction
-  | direction >= 0 && direction < 90 = "(north)"
-  | direction >= 90 && direction < 180 = "(east)"
-  | direction >= 180 && direction < 270 = "(south)"
-  | direction >= 270 && direction < 360 = "(west)"
-  | otherwise = pack $ show (InvalidFormat "Invalid input :")
-
--- | Adds a directional arrow for where the wind comes from
-windDir :: Text -> Text
-windDir t
-  | "(north)" == t = "↓ " <> t
-  | "(east)" == t = "← " <> t
-  | "(south)" == t = "↑ " <> t
-  | "(west)" == t = "→ " <> t
-  | otherwise = ""
-
 data SummaryDetails = SummaryDetails
   { _probabilityOfPrecipitation :: Maybe Double,
     _precipitationAmount :: Maybe Double,
@@ -193,7 +144,6 @@ data SummaryDetails = SummaryDetails
     _airTemperatureMax :: Maybe Double,
     _airTemperatureMin :: Maybe Double
   }
-  deriving (Show, Generic)
 
 instance FromJSON SummaryDetails where
   parseJSON = withObject "SummaryDetails" $ \v ->
@@ -206,13 +156,12 @@ instance FromJSON SummaryDetails where
       <*> v .:? "air_temperature_max"
       <*> v .:? "air_temperature_min"
 
--- | GeoLocation data types
+-- | GeoLocation data type
 data GeoLocation = GeoLocation
   { name :: Text,
     lat :: Double,
     lon :: Double
   }
-  deriving (Generic)
 
 instance FromJSON GeoLocation where
   parseJSON = withObject "GeoLocation" $ \v ->
@@ -221,23 +170,13 @@ instance FromJSON GeoLocation where
       <*> v .: "lat"
       <*> v .: "lon"
 
-instance Show GeoLocation where
-  show (GeoLocation name' lat' lon') =
-    unpack name'
-      <> "\n"
-      <> "(lat,lon) ==> ("
-      <> show lat'
-      <> ", "
-      <> show lon'
-      <> ")"
-
+-- | GeoLocation data type from JSON according to the nominatim API
 data NominatimResponse = NominatimResponse
   { placeId :: Int,
     latResponse :: Text,
     lonResponse :: Text,
     displayName :: Text
   }
-  deriving (Show, Generic)
 
 instance FromJSON NominatimResponse where
   parseJSON = withObject "NominatimResponse" $ \v ->
@@ -249,53 +188,26 @@ instance FromJSON NominatimResponse where
 
 -- Sunset/Sunrise
 
+-- | Sunset and Sunrise datatype
 data Sun = Sun
   { cityS :: Text,
     countryS :: Maybe Text,
     dateS :: Text
   }
-instance Show Sun where 
-  show (Sun city' (Just country') date') = "City: " <> unpack city' <> "\n Country: " <> unpack country' <> "\n Date: " <> show date'
-  show (Sun city' Nothing date') = "City: " <> unpack city' <> "\n Date: " <> show date'
 
+-- | Sunset and Sunrise datatype for JSON from the met API
 newtype SunData = SunData {_sunProperties :: Maybe SunProperties}
-  deriving (Show, Generic)
+
+instance FromJSON SunData where
+  parseJSON = withObject "SunData" $ \v ->
+    SunData
+      <$> v .:? "properties"
 
 data SunProperties = SunProperties
   { _sunBody :: Maybe Text,
     _sunrise :: Maybe Sunrise,
     _sunset :: Maybe Sunset
   }
-  deriving (Show, Generic)
-
-data Sunrise = Sunrise
-  { _sunriseTime :: Maybe UTCTime,
-    _sunriseAzimuth :: Maybe Double
-  }
-  deriving (Generic)
-
-instance Show Sunrise where
-  show sunrise =
-    "Sunrise at time: "
-      <> maybe (show $ MissingVal "Date not available") (\t -> show t <> "\n") (_sunriseTime sunrise)
-      <> maybe (show $ MissingVal "Sunrise direction not available") (\dir -> "Sunrise direction: " <> unpack (degToDir dir) <> " (" <> show dir <> "°)") (_sunriseAzimuth sunrise)
-
-data Sunset = Sunset
-  { _sunsetTime :: Maybe UTCTime,
-    _sunsetAzimuth :: Maybe Double
-  }
-  deriving (Generic)
-
-instance Show Sunset where
-  show sunset =
-    "Sunset at time: "
-      <> maybe (show $ MissingVal "Date not available") (\t -> show t <> "\n") (_sunsetTime sunset)
-      <> maybe (show $ MissingVal "Sunset direction not available") (\dir -> "Sunset direction: " <> unpack (degToDir dir) <> " (" <> show dir <> "°)") (_sunsetAzimuth sunset)
-
-instance FromJSON SunData where
-  parseJSON = withObject "SunData" $ \v ->
-    SunData
-      <$> v .:? "properties"
 
 instance FromJSON SunProperties where
   parseJSON = withObject "properties" $ \v ->
@@ -304,11 +216,21 @@ instance FromJSON SunProperties where
       <*> v .:? "sunrise"
       <*> v .:? "sunset"
 
+data Sunrise = Sunrise
+  { _sunriseTime :: Maybe UTCTime,
+    _sunriseAzimuth :: Maybe Double
+  }
+
 instance FromJSON Sunrise where
   parseJSON = withObject "sunrise" $ \v ->
     Sunrise
       <$> v .:? "time"
       <*> v .:? "azimuth"
+
+data Sunset = Sunset
+  { _sunsetTime :: Maybe UTCTime,
+    _sunsetAzimuth :: Maybe Double
+  }
 
 instance FromJSON Sunset where
   parseJSON = withObject "sunrise" $ \v ->
@@ -325,57 +247,124 @@ data Cmd
   | MinMaxWeatherCmd Text
   | WeekWeatherCmd Text
   | SunCmd Text
-  deriving (Show, Eq)
+  deriving (Eq, Show)
 
 -- | Error Types
 type Parser = Parsec PError Text
 
+-- | Custom subcategories for different error types
 data PError
   = EmptyInput
   | UnknownCommand Text
   | ArgumentError Text
   | InvalidFormat Text
-  deriving (Ord, Eq)
+  deriving (Ord, Eq, Show)
 
-instance Show PError where
-  show EmptyInput = "EmptyInput"
-  show (UnknownCommand v) = "UnknownCommand: " <> unpack v
-  show (ArgumentError v) = "ArgumentError: " <> unpack v
-  show (InvalidFormat v) = "InvalidFormat: " <> unpack v
-
+-- | Custom error types
 data ErrorTypes
   = APIError ClientError
   | MissingVal Text
   | ParseErr PError
   deriving (Eq)
 
-instance Show ErrorTypes where
-  show (APIError c) = "APIError: " <> show c
-  show (MissingVal val) = "MissingVal: " <> unpack val
-  show (ParseErr pe) = "ParseError ==> " <> show pe
-
--- | Input weather data type
+-- | Weather data type
 data Weather = Weather
   { city :: Text,
     country :: Maybe Text,
     date :: Maybe UTCTime
   }
 
-instance Show Weather where
-  show (Weather city' (Just country') (Just date')) = "City: " <> unpack city' <> "\n Country: " <> unpack country' <> "\n Time: " <> show date'
-  show (Weather city' Nothing (Just date')) = "City: " <> unpack city' <> "\nTime: " <> show date'
-  show (Weather city' (Just country') Nothing) = "City: " <> unpack city' <> "\nCountry: " <> unpack country'
-  show (Weather city' _ _) = "City: " <> unpack city'
-
 -- | Location data type
 data Location = Location
   { cityL :: Text,
     countryL :: Maybe Text
   }
+  deriving (Show)
 
-instance Show Location where
-  show (Location city' (Just country')) = "City: " <> unpack city' <> " Country: " <> unpack country'
-  show (Location city' _) = "City:" <> unpack city'
+-- | Converts datatype to a text (is very similar to class Show)
+class ToText a where
+  toText :: a -> Text
+
+instance ToText InstantDetails where
+  toText inDetails =
+    "------------------------------------ \n"
+      <> "- Temperature: "
+      <> maybe (toText $ MissingVal "Temperature not available") (\t -> pack (show t) <> "°C") (_airTemperature inDetails)
+      <> "\n"
+      <> "- Wind: "
+      <> maybe (toText $ MissingVal "Wind not available") (\w -> pack (show w) <> " km/h") (_windSpeed inDetails)
+      <> "\n"
+      <> "- Wind Direction: "
+      <> maybe (toText $ MissingVal "wind direction not available") (\d -> (windDir . degToDir) d <> " (" <> pack (show d) <> "°)") (_windFromDirection inDetails)
+      <> "\n"
+      <> "- Cloud Coverage: "
+      <> maybe (toText $ MissingVal "CloudCoverage not available") (\c -> pack (show c) <> "%") (_cloudAreaFraction inDetails)
+      <> "\n"
+      <> "- Air Pressure: "
+      <> maybe (toText $ MissingVal "Airpressure not available") (\p -> pack (show p) <> " hPa") (_airPressureAtSeaLevel inDetails)
+      <> "\n------------------------------------"
+
+instance ToText GeoLocation where
+  toText (GeoLocation name' lat' lon') =
+    name' <> "\n(lat,lon) ==> (" <> pack (show lat') <> ", " <> pack (show lon') <> ")"
+
+instance ToText Sun where
+  toText (Sun city' (Just country') date') = "City: " <> city' <> "\n Country: " <> country' <> "\n Date: " <> pack (show date')
+  toText (Sun city' Nothing date') = "City: " <> city' <> "\n Date: " <> pack (show date')
+
+instance ToText Sunrise where
+  toText sunrise =
+    "Sunrise at time: "
+      <> maybe (toText $ MissingVal "Date not available") (\t -> pack (show t) <> "\n") (_sunriseTime sunrise)
+      <> maybe (toText $ MissingVal "Sunrise direction not available") (\dir -> "Sunrise direction: " <> degToDir dir <> " (" <> pack (show dir) <> "°)") (_sunriseAzimuth sunrise)
+
+instance ToText Sunset where
+  toText sunset =
+    "Sunset at time: "
+      <> maybe (toText $ MissingVal "Date not available") (\t -> pack (show t) <> "\n") (_sunsetTime sunset)
+      <> maybe (toText $ MissingVal "Sunset direction not available") (\dir -> "Sunset direction: " <> degToDir dir <> " (" <> pack (show dir) <> "°)") (_sunsetAzimuth sunset)
+
+instance ToText PError where
+  toText (UnknownCommand cmd) = "Unknown command => " <> cmd
+  toText EmptyInput = "EmptyInput => No input provided."
+  toText (ArgumentError txt) = "ArgumentError => " <> txt
+  toText (InvalidFormat txt) = "InvalidFormat => The following argument " <> txt <> " is invalid"
+
+instance ToText ErrorTypes where
+  toText (MissingVal msg) = "Missing value => " <> msg
+  toText (ParseErr err) = "Parse error => " <> toText err
+  toText (APIError err) = "API error => " <> pack (show err)
+
+instance ToText Weather where
+  toText (Weather city' (Just country') (Just date')) = "City: " <> city' <> "\n Country: " <> country' <> "\n Time: " <> pack (show date')
+  toText (Weather city' Nothing (Just date')) = "City: " <> city' <> "\nTime: " <> pack (show date')
+  toText (Weather city' (Just country') Nothing) = "City: " <> city' <> "\nCountry: " <> country'
+  toText (Weather city' _ _) = "City: " <> city'
+
+instance ToText Location where
+  toText (Location city' (Just country')) = "City: " <> city' <> " Country: " <> country'
+  toText (Location city' _) = "City: " <> city'
+
+instance ToText UTCTime where
+  toText t = pack $ show t
+
+-- | Converts the direction degree to text directions
+degToDir :: Double -> Text
+degToDir direction
+  | direction >= 0 && direction < 90 = "(north)"
+  | direction >= 90 && direction < 180 = "(east)"
+  | direction >= 180 && direction < 270 = "(south)"
+  | direction >= 270 && direction < 360 = "(west)"
+  | otherwise = toText $ InvalidFormat "Invalid input :"
+
+-- | Adds a directional arrow for where the wind comes from
+windDir :: Text -> Text
+windDir t
+  | "(north)" == t = "↓ " <> t
+  | "(east)" == t = "← " <> t
+  | "(south)" == t = "↑ " <> t
+  | "(west)" == t = "→ " <> t
+  | otherwise = ""
 
 -- | Create lenses for the custom datatypes
 makeLenses ''WeatherData

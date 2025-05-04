@@ -26,6 +26,7 @@ getMax tsList inpDate =
   let entries =
         mapMaybe
           ( \ts ->
+              -- Only check if the input date isn't old
               if checkValidTime ts inpDate
                 then do
                   timeData' <- ts ^. timeData
@@ -36,11 +37,12 @@ getMax tsList inpDate =
                 else Nothing
           )
           tsList
-   in foldl
-        ( \maxT x ->
-            case maxT of
+   in -- Go through the timeseries to find the one with the highest temperature
+      foldl
+        ( \maxTemp x ->
+            case maxTemp of
               Nothing -> Just x
-              Just (_, temp) -> if snd x >= temp then Just x else maxT
+              Just (_, temp) -> if snd x >= temp then Just x else maxTemp
         )
         Nothing
         entries
@@ -51,6 +53,7 @@ getMin tsList inpDate =
   let entries =
         mapMaybe
           ( \ts ->
+              -- Only check if the input date isn't old
               if checkValidTime ts inpDate
                 then do
                   timeData' <- ts ^. timeData
@@ -61,11 +64,12 @@ getMin tsList inpDate =
                 else Nothing
           )
           tsList
-   in foldl
-        ( \minT x ->
-            case minT of
+   in -- Go through the timeseries to find the one with the lowest temperature
+      foldl
+        ( \minTemp x ->
+            case minTemp of
               Nothing -> Just x
-              Just (_, temp) -> if snd x <= temp then Just x else minT
+              Just (_, temp) -> if snd x <= temp then Just x else minTemp
         )
         Nothing
         entries
@@ -77,46 +81,51 @@ filterWeatherByDate weatherData targetDate = do
   let tsList = fromJust (props ^. timeseries)
   filter (\ts -> utctDay (fromJust (ts ^. time)) == targetDate) tsList
 
--- | Filter the weatherdata to get only the timeseries data
+-- | Filter the weatherdata to get only the timeseries data mathing the time
 getSpecificTimeSeries :: WeatherData -> UTCTime -> Maybe TimeSeriesData
 getSpecificTimeSeries w targetTime = do
+  let roundedT = roundToNearestHour targetTime
   props <- w ^. properties
   tsList <- props ^. timeseries
-  timeSeries <- find (\ts -> ts ^. time == Just targetTime) tsList
+  timeSeries <- find (\ts -> ts ^. time == Just roundedT) tsList
   timeSeries ^. timeData
 
+-- | Get all the TimeSeriesData for the week, instead of calling getSpecificTimeSeries manually for each day in the week
 getWeeklyTimeSeries :: WeatherData -> UTCTime -> [(Maybe TimeSeriesData, UTCTime)]
 getWeeklyTimeSeries w targetTime =
-  let res = [(getSpecificTimeSeries w targetTime, targetTime)] -- Get the current timeSeries
+  let initial = case getSpecificTimeSeries w targetTime of -- If the weatherdata doesn't have that specific time, round it to the nearest quarter
+        Nothing -> getSpecificTimeSeries w (roundToNearestQuarter targetTime)
+        Just v -> Just v
+      res = [(initial, targetTime)]
       roundedTime = roundToNearestQuarter targetTime
    in foldl (\ls day -> ls <> [(getSpecificTimeSeries w (nextDay roundedTime day), nextDay roundedTime day)]) res [1 .. 6] -- get the rest of the following timeseries
 
 --- TIME HELPER FUNCTIONS
 
 -- | List of quarter times such as 00:00, 06:00, 12:00 and 18:00
-targetTimes :: [Int]
-targetTimes = [0, 6 * 3600, 12 * 3600, 18 * 3600]
+quarterTimes :: [Int]
+quarterTimes = [0, 6 * 3600, 12 * 3600, 18 * 3600]
 
--- | Round the time to the nearest quarter which is one of the alternatives in targetTimes
+-- | Round the time to the nearest quarter which is one of the alternatives in quarterTimes
 roundToNearestQuarter :: UTCTime -> UTCTime
 roundToNearestQuarter t =
   let seconds = round (utctDayTime t) `mod` (24 * 3600) -- Convert the the time variable to seconds
-      diffs = fmap (\v -> (v, abs (seconds - v))) targetTimes -- Get the difference between the time and the targettimes
-      -- Iterate through the list of tuples to determine which quarter time has the smallest difference. That would be the time we set
-      (closestTarget, _) =
+      diffs = fmap (\v -> (v, abs (seconds - v))) quarterTimes -- Get the difference between the time and the quarters
+      -- Iterate through the map of tuples to determine which quarter time has the smallest difference. That would be the time we set
+      (quarterDiff, _) =
         foldl
           ( \(closest, mindiff) (current, currdiff) ->
               if currdiff < mindiff then (current, currdiff) else (closest, mindiff)
           )
           (head diffs)
           diffs
-   in addUTCTime (fromIntegral (closestTarget - seconds)) t
+   in addUTCTime (fromIntegral (quarterDiff - seconds)) t
 
 -- | Get the next day
 nextDay :: UTCTime -> Integer -> UTCTime
 nextDay time' n = time' {utctDay = addDays n (utctDay time')}
 
--- | Get the current time and convert it according to the timezone
+-- | Get the current time and convert it according to the timezone of the device
 currentTime :: IO UTCTime
 currentTime = do
   zonedTime <- getZonedTime
