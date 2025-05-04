@@ -3,6 +3,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
+-- |
+-- Module      : Discord
+-- Description : Contains the Discord function which is used to run the discord bot
 module Discord where
 
 import Calamity
@@ -40,8 +43,7 @@ discord = do
         react @'MessageCreateEvt $ \(msg', _usr, _member) -> do
           let content' = msg' ^. #content
           when (T.head content' == '!') $ do
-            -- Parse the input command
-            case parseCommand content' of
+            case parseCommand content' of -- Parse the input command
               Left e -> void $ tell @Text msg' (toText e)
               Right Quit -> void $ tell @Text msg' "Exiting Application"
               Right Help -> void $ tell @Text msg' displayCommands

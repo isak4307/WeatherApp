@@ -1,6 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
+-- \|
+-- Module      : GenUtils
+-- Description : Contains all the generator functions for generating mock test input values
 module GenUtils where
 
 import Data.Char (isAscii, isDigit, isPrint)

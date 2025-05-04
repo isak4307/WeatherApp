@@ -1,5 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- \|
+-- Module      : THandler
+-- Description: Contains all QuickChecks that are related to the functions found in Handler.hs
+
 module THandler where
 
 import qualified Data.Text as T

@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- |
+-- Module      : Display
+-- Description : Functions that displays all the output values.
 module Display where
 
 import Control.Lens ((^.))

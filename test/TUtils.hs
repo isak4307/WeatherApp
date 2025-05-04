@@ -1,5 +1,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
+-- \|
+-- Module      : TUtils
+-- Description: Contains all QuickChecks that are related to the functions in Utils.hs.
+--              Not all functions in Utils.hs is QuickChecked.
 module TUtils where
 
 import Data.Time

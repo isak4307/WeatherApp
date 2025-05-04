@@ -1,6 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
+-- \|
+-- Module      : Types
+-- Description : Contains all datatypes and classes created.
+--               All modified instances and lenses are also created here.
 module Types where
 
 import Control.Lens (makeLenses)

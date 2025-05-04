@@ -2,6 +2,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
+-- \|
+-- Module      : API
+-- Description : Contains all the functions releated to the different APIs for fetching weatherdata, geodata and sunset/sunrise data
 module API where
 
 import Control.Monad.IO.Class (liftIO)

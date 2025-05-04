@@ -40,7 +40,11 @@ If you already have a bot set up and have its token, you can skip to step **7**
 ## Bugs and Issues  
 There is a problem when handling utf-8 characters in the terminal.  
 Meaning, if the input value contains such characters (example: "ÆØÅ"), they won't be parsed correctly and the code treats them as empty characters.  
-This issue only affects users using the terminal. The discord bot is able to handle such characters.  
+This issue only affects users using the terminal. The discord bot is able to handle such characters.
+### Update  
+It seems that the issue is only in my vsc terminal? Tried testing it in another terminal such as git bash, and it worked perfectly fine.  
+Still not sure how to solve this issue, but at least this might indicate that this is not a program issue, but rather individual terminal issue.  
+
 Another small issue is that the discord bot won't be able to shutdown/terminate when the command *!quit* is written to it.  
 
 ## Commands

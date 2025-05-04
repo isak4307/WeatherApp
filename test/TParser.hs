@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- \|
+-- Module      : TParser
+-- Description: Contains all QuickChecks that are related to the Parser functions in Parser.hs.
 module TParser where
 
 import Data.Maybe (isNothing)

@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- \|
+-- Module      : Parser
+-- Description : Contains all the parser functions for all the datatypes that need to be parsed.
 module Parser where
 
 import Data.Char (isDigit)

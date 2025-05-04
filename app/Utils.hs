@@ -1,5 +1,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
+-- \|
+-- Module      : Utils
+-- Description : Contains all helper functions that are used variously in different modules.
+--               The upper part contains all weather data specific helper functions, whilst the lower half contains time helper functions.
 module Utils where
 
 import Control.Lens ((^.))

@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- \|
+-- Module      : Main
+-- Description : The Main file that executes and runs the program.
 module Main where
 
 import Control.Monad.Except (runExceptT)

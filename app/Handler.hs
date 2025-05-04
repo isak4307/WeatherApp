@@ -1,5 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- \|
+-- Module      : Handler
+-- Description : Contains all functions that works as a bridge amongst other
+--               functions such as getting data from APIs and parsing input values
 module Handler where
 
 import API
